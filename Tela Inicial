@@ -1,0 +1,101 @@
+
+Private Sub CommandButton1_Click()
+    Dim ws              As Worksheet
+    Dim selectedValue   As String
+    Dim Password        As String
+    Dim filterRange     As Range
+
+    ' Definir a senha de proteção
+    Password = "123"
+
+    ' Referenciar a planilha Tarefas
+    Set ws = ThisWorkbook.Worksheets("Tarefas")
+
+    ' Capturar o valor selecionado no ComboBox1
+    selectedValue = ComboBox1.Value
+
+    ' Verificar se um valor foi selecionado no ComboBox
+    If selectedValue = "" Then
+        MsgBox "Por favor, selecione uma opção no ComboBox.", vbExclamation, "Atenção"
+        Exit Sub
+    End If
+
+    ' Desbloquear a planilha para alterações
+    On Error Resume Next
+    ws.Unprotect Password:=Password
+    On Error GoTo 0
+
+    ' Definir o intervalo de cabeçalhos e dados (ajuste conforme necessário)
+    Set filterRange = ws.Range("A5:D" & ws.Cells(ws.Rows.Count, 1).End(xlUp).Row)
+
+    ' Ativar o AutoFilter
+    If Not ws.AutoFilterMode Then
+        filterRange.AutoFilter
+    End If
+
+    ' Aplicar o filtro
+    With filterRange
+        If selectedValue = "TODOS" Then
+            ' Remover filtros se "Todos" for selecionado
+            If ws.AutoFilterMode Then ws.AutoFilterMode = False
+            MsgBox "Exibindo todos os dados.", vbInformation, "Filtro"
+        Else
+            ' Aplicar filtro na coluna C
+            .AutoFilter Field:=4, Criteria1:=selectedValue
+            MsgBox "Exibindo dados para: " & selectedValue, vbInformation, "Filtro"
+        End If
+    End With
+
+    ' Desativar os filtros (Ctrl + L programaticamente)
+    ws.AutoFilterMode = False
+
+    ' Reproteger a planilha para evitar acesso manual
+    ws.Protect Password:=Password, AllowFiltering:=False, DrawingObjects:=True, Contents:=True, Scenarios:=True
+
+    ' Tornar o Excel visível e fechar o UserForm
+    Application.Visible = True
+    Unload Me
+End Sub
+
+
+Private Sub UserForm_Initialize()
+    Dim ws      As Worksheet
+    Dim lastRow As Long
+    Dim rng     As Range
+    Dim cell    As Range
+    Dim dict    As Object
+    
+    ' Referenciar a planilha Tarefas
+    Set ws = ThisWorkbook.Worksheets("Tarefas")
+    
+    ' Encontrar a última linha com dados na coluna C
+    lastRow = ws.Cells(ws.Rows.Count, "D").End(xlUp).Row
+    
+    ' Definir o intervalo de dados na coluna C
+    Set rng = ws.Range("D6:D" & lastRow) ' Considerando que os nomes começam na linha 6
+    
+    ' Criar o objeto Dictionary
+    Set dict = CreateObject("Scripting.Dictionary")
+    
+    ' Percorrer cada célula do intervalo
+    For Each cell In rng
+        If Not IsEmpty(cell.Value) And Not dict.exists(cell.Value) Then
+            dict.Add cell.Value, True ' Adicionar o valor ao Dictionary
+        End If
+    Next cell
+    
+    ' Adicionar o item "Todos" como a primeira opção da ComboBox
+    ComboBox1.Clear
+    ComboBox1.AddItem "TODOS"
+    
+    ' Adicionar os valores únicos à ComboBox
+    Dim key As Variant
+    For Each key In dict.Keys
+        ComboBox1.AddItem key
+    Next key
+    
+    ' Liberar o objeto Dictionary
+    Set dict = Nothing
+End Sub
+
+
