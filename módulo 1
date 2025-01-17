@@ -1,0 +1,96 @@
+Public Sub CadastroShow()
+
+    Dim senhaCorreta    As String
+    Dim senhaInformada  As String
+    
+    ' Definir a senha correta
+    senhaCorreta = "123"
+    
+    ' Solicitar a senha ao usuário
+    senhaInformada = InputBox("Digite a senha para acessar o formulário:", "Acesso Restrito")
+    
+    ' Verificar se a senha informada está correta
+    If senhaInformada = senhaCorreta Then
+        ' Se a senha estiver correta, exibe o formulário
+        Cadastro.Show
+    Else
+        ' Se a senha estiver incorreta, exibe uma mensagem
+        MsgBox "Senha incorreta! O acesso foi negado.", vbCritical, "Acesso Negado"
+    End If
+
+End Sub
+
+
+Public Sub AppShow()
+
+App.Show
+
+End Sub
+
+Sub VerificarSenhaEBloquear()
+
+    Dim senhaCorreta    As String
+    Dim senhaInformada  As String
+    Dim tentativas      As Integer
+    Dim ws              As Worksheet
+
+    ' Definir a senha correta
+    senhaCorreta = "123"
+    tentativas = 3 ' Número de tentativas permitidas
+
+    ' Referenciar a planilha ativa
+    Set ws = ThisWorkbook.Sheets("Tarefas") ' Altere para o nome da sua planilha
+
+    ' Verifica o estado de proteção da planilha
+    If ws.ProtectContents Then
+        ' Se a planilha estiver protegida, pede a senha para desbloquear
+        Do While tentativas > 0
+            senhaInformada = InputBox("Digite a senha para desbloquear:", "Proteção Planilha")
+            
+            If senhaInformada = senhaCorreta Then
+                ' Remove a proteção
+                ws.Unprotect senhaInformada
+                MsgBox "Planilha desbloqueada com sucesso!", vbInformation
+                Exit Sub
+            Else
+                tentativas = tentativas - 1
+                If tentativas > 0 Then
+                    MsgBox "Senha incorreta! Você ainda tem " & tentativas & " tentativa(s).", vbExclamation
+                Else
+                    MsgBox "Número máximo de tentativas alcançado. Acesso negado.", vbCritical
+                End If
+            End If
+        Loop
+    Else
+        ' Se a planilha não estiver protegida, solicita a senha para proteger
+        senhaInformada = InputBox("Digite a senha para proteger a planilha:")
+
+        If senhaInformada = senhaCorreta Then
+            ' Protege a planilha
+            ws.Protect senhaInformada
+            MsgBox "Planilha protegida com sucesso!", vbInformation
+        Else
+            MsgBox "Senha incorreta. Não foi possível proteger a planilha.", vbCritical
+        End If
+    End If
+End Sub
+
+Sub IrParaDashboard()
+    'Ativar a Planilha4, colocar o nome da planilha
+    Sheets("Dashboard").Activate
+    'Opcional: Ir para uma célula específica (por exemplo, A1)
+    Range("A1").Select
+End Sub
+
+Sub IrParaTarefas()
+
+    'Ativar planilha1, colocar o nome correto
+    Sheets("Tarefas").Activate
+    
+    'Opcional: Ir para uma célula específica (por exemplo, A1)
+    Range("A1").Select
+End Sub
+
+
+
+
