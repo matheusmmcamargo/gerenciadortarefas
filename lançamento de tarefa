@@ -1,0 +1,183 @@
+Private Sub btnCadastar_Click()
+
+    Dim CampoEmBranco   As Boolean
+    Dim Linha           As Integer
+
+    CampoEmBranco = False
+    
+    ' Verificação se os campos obrigatórios estão preenchidos
+    If txtVncto = Empty Then CampoEmBranco = True
+    If txtTítulo = Empty Then CampoEmBranco = True
+    If cmbResponsavel = Empty Then CampoEmBranco = True
+
+    ' Exibe mensagem de erro se algum campo obrigatório estiver em branco
+    If CampoEmBranco = True Then
+        MsgBox "Preencha todos os campos!", vbInformation, "Preenchimento Obrigatório"
+        Exit Sub
+    End If
+
+    ' Identificar a última linha preenchida na tabela
+    Linha = 6
+    Do While Planilha1.Cells(Linha, 1) <> Empty
+        Linha = Linha + 1
+    Loop
+
+    ' Armazenar os dados preenchidos
+    Planilha1.Cells(Linha, 1) = txtVncto.Value                ' Vencimento
+    Planilha1.Cells(Linha, 2) = txtCod.Value                  ' Código
+    Planilha1.Cells(Linha, 3) = UCase(txtTítulo.Value)        ' Título (em maiúsculas)
+    Planilha1.Cells(Linha, 4) = UCase(cmbResponsavel.Value)   ' Responsável (em maiúsculas)
+    
+    ' Fechar o formulário após o cadastro
+    Unload Me
+    MsgBox "Cadastro realizado com sucesso!", vbInformation, "Cadastro Concluído"
+
+End Sub
+
+Private Sub btnCancelar_Click()
+    ' Limpar os campos do formulário
+    Me.txtVncto.Value = ""
+    Me.txtCod.Value = ""
+    Me.cmbResponsavel.Value = ""
+    Me.txtTítulo.Value = ""
+
+    ' Fechar o formulário
+    Me.Hide
+    MsgBox "Você fechou o formulário!", vbInformation, "Formulário Fechado"
+End Sub
+
+Private Sub cmbResponsavel_Change()
+    Dim novoNome As String
+    Dim i As Integer
+    Dim listaNomes As Collection
+    Dim itemAtual As Variant
+
+    ' Inicializa a coleção de nomes
+    Set listaNomes = New Collection
+
+    ' Adiciona os nomes predefinidos
+    On Error Resume Next
+    listaNomes.Add "CASSIO SILVA", "CASSIO SILVA"
+    listaNomes.Add "JOSÉ DA SILVA", "JOSÉ DA SILVA"
+    listaNomes.Add "LEONARDO MEIRA", "LEONARDO MEIRA"
+    listaNomes.Add "MATHEUS CAMARGO", "MATHEUS CAMARGO"
+    listaNomes.Add "PEDRO SILVA", "PEDRO SILVA"
+    On Error GoTo 0
+
+    ' Verifica se foi digitado um novo nome
+    novoNome = Trim(cmbResponsavel.Text)
+    If novoNome <> "" Then
+        On Error Resume Next
+        listaNomes.Add novoNome, novoNome ' Adiciona o novo nome à coleção, se não existir
+        On Error GoTo 0
+    End If
+
+    ' Limpa os itens da ComboBox para recarregar
+    cmbResponsavel.Clear
+
+    ' Copia os itens da coleção para um array para ordenar
+    Dim nomesArray() As String
+    ReDim nomesArray(1 To listaNomes.Count)
+    i = 1
+    For Each itemAtual In listaNomes
+        nomesArray(i) = itemAtual
+        i = i + 1
+    Next itemAtual
+
+    ' Ordena o array em ordem alfabética
+    Call OrdenarArray(nomesArray)
+
+    ' Adiciona os itens ordenados de volta à ComboBox
+    For i = LBound(nomesArray) To UBound(nomesArray)
+        cmbResponsavel.AddItem nomesArray(i)
+    Next i
+
+    ' Restaura o texto digitado, caso esteja na lista
+    cmbResponsavel.Text = novoNome
+End Sub
+
+Private Sub OrdenarArray(ByRef arr() As String)
+    Dim i As Integer, j As Integer
+    Dim temp As String
+
+    ' Algoritmo de ordenação (Bubble Sort)
+    For i = LBound(arr) To UBound(arr) - 1
+        For j = i + 1 To UBound(arr)
+            If arr(i) > arr(j) Then
+                temp = arr(i)
+                arr(i) = arr(j)
+                arr(j) = temp
+            End If
+        Next j
+    Next i
+End Sub
+
+Private Sub CarregarNomes()
+    Dim nomes() As String
+    Dim i As Integer
+
+    ' Lista de nomes predefinidos
+    nomes = Split("CASSIO SILVA,JOSÉ DA SILVA,LEONARDO MEIRA,MATHEUS CAMARGO,PEDRO SILVA", ",")
+
+    ' Ordenar os nomes em ordem alfabética
+    Call OrdenarArray(nomes)
+
+    ' Preencher a ComboBox
+    cmbResponsavel.Clear
+    For i = LBound(nomes) To UBound(nomes)
+        cmbResponsavel.AddItem nomes(i)
+    Next i
+End Sub
+
+Private Sub txtVncto_Change()
+    Dim txt             As String
+    Dim formattedDate   As String
+
+    ' Captura o valor digitado
+    txt = txtVncto.Text
+
+    ' Remove caracteres não numéricos
+    txt = Replace(txt, "/", "")
+
+    ' Verifica se o valor digitado é numérico e contém até 8 caracteres
+    If IsNumeric(txt) And Len(txt) <= 8 Then
+        Select Case Len(txt)
+            Case 1 To 2
+                formattedDate = txt ' Apenas dias
+            Case 3 To 4
+                formattedDate = Left(txt, 2) & "/" & Mid(txt, 3) ' Dia/Mês
+            Case 5 To 8
+                formattedDate = Left(txt, 2) & "/" & Mid(txt, 3, 2) & "/" & Mid(txt, 5) ' Dia/Mês/Ano
+        End Select
+    End If
+
+    ' Atualiza o valor do TextBox sem reposicionar o cursor
+    Application.EnableEvents = False
+    txtVncto.Text = formattedDate
+    txtVncto.SelStart = Len(txtVncto.Text) ' Mantém o cursor no final
+    Application.EnableEvents = True
+End Sub
+
+Private Sub UserForm_Initialize()
+    ' Carrega os nomes predefinidos
+    Call CarregarNomes
+
+    ' Capturar a data de hoje e formatar no padrão dd/mm/yyyy
+    txtVncto.Text = Format(Date + 30, "dd/mm/yyyy")
+
+    Dim ws As Worksheet
+    Dim codigoAtual As Variant
+
+    ' Definir a planilha onde está a célula G2
+    Set ws = ThisWorkbook.Worksheets("Tarefas") ' Altere "Tarefas" para o nome correto da sua planilha
+
+    ' Capturar o valor atual de G2
+    codigoAtual = ws.Range("G2").Value
+
+    ' Verificar se é um número válido antes de incrementar
+    If IsNumeric(codigoAtual) Then
+        txtCod.Text = CStr(codigoAtual + 1)
+    Else
+        txtCod.Text = "1" ' Definir um valor padrão caso G2 não seja numérico
+    End If
+End Sub
