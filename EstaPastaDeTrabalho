@@ -1,0 +1,17 @@
+Private Sub Workbook_Open()
+    Dim ws As Worksheet
+    Dim Password As String
+    
+    ' Definir a senha de proteção
+    Password = "123"
+    
+    ' Referenciar a planilha Tarefas
+    Set ws = ThisWorkbook.Worksheets("Tarefas")
+    
+    ' Proteger a planilha, permitindo alterações via código
+    ws.Protect Password:=Password, AllowFiltering:=True, UserInterfaceOnly:=True
+    
+    ' Exibir o UserForm na inicialização
+    Application.Visible = False
+    App.Show
+End Sub
